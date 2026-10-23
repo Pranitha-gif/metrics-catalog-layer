@@ -1,0 +1,64 @@
+# Metrics catalog: define each metric ONCE, compile it to SQL everywhere.
+
+model:
+  name: sales
+  table: sales            # physical table / view (e.g. a Gold-layer table)
+
+dimensions:
+  - name: order_date
+    column: order_date
+    type: time            # supports grains: day, month, quarter, year
+  - name: region
+    column: region
+  - name: category
+    column: category
+  - name: segment
+    column: segment
+
+metrics:
+  # ---- simple metrics: one aggregation over one column ----
+  - name: revenue
+    description: Total revenue after discounts
+    agg: sum
+    column: revenue
+    format: currency
+
+  - name: profit
+    description: Revenue minus cost
+    agg: sum
+    column: profit
+    format: currency
+
+  - name: orders
+    description: Number of distinct orders
+    agg: count_distinct
+    column: order_id
+    format: integer
+
+  - name: customers
+    description: Number of distinct customers
+    agg: count_distinct
+    column: customer_id
+    format: integer
+
+  - name: units_sold
+    description: Total quantity sold
+    agg: sum
+    column: quantity
+    format: integer
+
+  # ---- derived metrics: expressions over other metrics ----
+  - name: avg_order_value
+    description: Revenue per order
+    expression: "{revenue} * 1.0 / NULLIF({orders}, 0)"
+    format: currency
+
+  - name: profit_margin_pct
+    description: Profit as a percentage of revenue
+    expression: "100.0 * {profit} / NULLIF({revenue}, 0)"
+    format: percent
+
+  - name: revenue_per_customer
+    description: Revenue per distinct customer
+    expression: "{revenue} * 1.0 / NULLIF({customers}, 0)"
+    format: currency
